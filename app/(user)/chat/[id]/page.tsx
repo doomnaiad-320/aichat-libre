@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Settings } from 'lucide-react'
+import { ArrowLeft, Settings, Menu } from 'lucide-react'
 import { Button } from '@/components/admin/ui/button'
 import { ChatContainer } from '@/components/chat/chat-container'
 import { ChatSidebar } from '@/components/chat/chat-sidebar'
@@ -52,6 +52,7 @@ export default function CharacterChatPage() {
   const [personas, setPersonas] = useState<LocalPersona[]>([])
   const [selectedPersona, setSelectedPersona] = useState<LocalPersona | null>(null)
   const [loading, setLoading] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -130,7 +131,7 @@ export default function CharacterChatPage() {
   if (providers.length === 0) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-4 p-6">
           <h2 className="text-xl font-semibold">配置AI服务</h2>
           <p className="text-muted-foreground">请先在设置中配置API Key</p>
           <Link href="/settings">
@@ -159,62 +160,88 @@ export default function CharacterChatPage() {
         currentChatId={currentChat?.id}
         onSelectChat={handleSelectChat}
         onNewChat={handleNewChat}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
-      <div className="flex-1 flex flex-col">
-        <div className="border-b p-2 flex items-center gap-3">
-          <Link href="/characters">
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <div className="border-b p-2 flex items-center gap-2 md:gap-3">
+          {/* Mobile Menu Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="md:hidden"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+
+          <Link href="/characters" className="hidden md:block">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <div className="flex items-center gap-2 flex-1">
-            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
+
+          {/* Character Info */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium shrink-0">
               {character.name.charAt(0)}
             </div>
-            <span className="font-medium">{character.name}</span>
+            <span className="font-medium truncate">{character.name}</span>
           </div>
-          {personas.length > 0 && (
+
+          {/* Mobile: Compact selectors */}
+          <div className="flex items-center gap-1 md:gap-2">
+            {/* Persona selector - hidden on small mobile */}
+            {personas.length > 0 && (
+              <select
+                value={selectedPersona?.id || ''}
+                onChange={e => {
+                  const persona = personas.find(p => p.id === e.target.value)
+                  setSelectedPersona(persona || null)
+                }}
+                className="hidden sm:block text-sm border rounded px-2 py-1 bg-background max-w-[100px] md:max-w-none"
+                title="选择人设"
+              >
+                <option value="">无人设</option>
+                {personas.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            )}
+
+            {/* Provider selector */}
             <select
-              value={selectedPersona?.id || ''}
+              value={selectedProvider.id}
               onChange={e => {
-                const persona = personas.find(p => p.id === e.target.value)
-                setSelectedPersona(persona || null)
+                const prov = providers.find(p => p.id === e.target.value)
+                if (prov) {
+                  setSelectedProvider(prov)
+                  setSelectedModel(prov.models[0])
+                }
               }}
-              className="text-sm border rounded px-2 py-1 bg-background"
-              title="选择人设"
+              className="text-sm border rounded px-2 py-1 bg-background max-w-[80px] md:max-w-none"
             >
-              <option value="">无人设</option>
-              {personas.map(p => (
+              {providers.map(p => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
-          )}
-          <select
-            value={selectedProvider.id}
-            onChange={e => {
-              const prov = providers.find(p => p.id === e.target.value)
-              if (prov) {
-                setSelectedProvider(prov)
-                setSelectedModel(prov.models[0])
-              }
-            }}
-            className="text-sm border rounded px-2 py-1 bg-background"
-          >
-            {providers.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-          <select
-            value={selectedModel}
-            onChange={e => setSelectedModel(e.target.value)}
-            className="text-sm border rounded px-2 py-1 bg-background"
-          >
-            {selectedProvider.models.map(m => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
+
+            {/* Model selector - hidden on mobile */}
+            <select
+              value={selectedModel}
+              onChange={e => setSelectedModel(e.target.value)}
+              className="hidden md:block text-sm border rounded px-2 py-1 bg-background"
+            >
+              {selectedProvider.models.map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div className="flex-1">
+
+        {/* Chat Container */}
+        <div className="flex-1 overflow-hidden">
           <ChatContainer
             chatId={currentChat?.id}
             provider={selectedProvider.type}
