@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, MessageCircle, Pencil, Trash2 } from 'lucide-react'
+import { Plus, MessageCircle, Pencil, Trash2, Download } from 'lucide-react'
 import { Button } from '@/components/admin/ui/button'
 import { CharacterCard } from '@/components/characters/character-card'
 import { CharacterForm } from '@/components/characters/character-form'
+import { CharacterImport } from '@/components/characters/character-import'
 import {
   getAllCharacters,
   createCharacter,
@@ -13,6 +14,39 @@ import {
   deleteCharacter,
   type LocalCharacter
 } from '@/lib/db/local'
+import {
+  exportCharacterAsPNG,
+  type CharacterCardV2
+} from '@/lib/utils/character-card'
+
+function toCharacterCard(char: LocalCharacter): CharacterCardV2 {
+  return {
+    spec: 'chara_card_v2',
+    spec_version: '2.0',
+    data: {
+      name: char.name,
+      description: char.description,
+      personality: char.personality,
+      scenario: char.scenario,
+      first_mes: char.firstMessage,
+      mes_example: char.exampleDialogue,
+      tags: char.tags,
+      creator: 'AIChatLibre',
+      character_version: '1.0',
+    }
+  }
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
 
 export default function CharactersPage() {
   const router = useRouter()
@@ -46,6 +80,26 @@ export default function CharactersPage() {
     router.push(`/chat/${id}`)
   }
 
+  const handleImport = async (card: CharacterCardV2) => {
+    await createCharacter({
+      name: card.data.name,
+      description: card.data.description,
+      personality: card.data.personality,
+      scenario: card.data.scenario,
+      firstMessage: card.data.first_mes,
+      exampleDialogue: card.data.mes_example,
+      tags: card.data.tags,
+      cardData: card as unknown as Record<string, unknown>,
+    })
+    setCharacters(await getAllCharacters())
+  }
+
+  const handleExportPNG = async (char: LocalCharacter) => {
+    const card = toCharacterCard(char)
+    const blob = await exportCharacterAsPNG(card, char.avatar)
+    downloadBlob(blob, `${char.name}.png`)
+  }
+
   if (isCreating || editing) {
     return (
       <div className="p-6 max-w-2xl">
@@ -63,14 +117,17 @@ export default function CharactersPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold">角色卡</h1>
-        <Button onClick={() => setIsCreating(true)}>
-          <Plus className="h-4 w-4 mr-1" /> 创建
-        </Button>
+        <div className="flex gap-2">
+          <CharacterImport onImport={handleImport} />
+          <Button onClick={() => setIsCreating(true)}>
+            <Plus className="h-4 w-4 mr-1" /> 创建
+          </Button>
+        </div>
       </div>
 
       {characters.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          暂无角色卡，点击创建开始
+          暂无角色卡，点击创建或导入开始
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -82,6 +139,7 @@ export default function CharactersPage() {
                   variant="secondary"
                   size="sm"
                   onClick={(e) => { e.stopPropagation(); handleChat(char.id) }}
+                  title="聊天"
                 >
                   <MessageCircle className="h-3 w-3" />
                 </Button>
@@ -89,13 +147,23 @@ export default function CharactersPage() {
                   variant="secondary"
                   size="sm"
                   onClick={(e) => { e.stopPropagation(); setEditing(char) }}
+                  title="编辑"
                 >
                   <Pencil className="h-3 w-3" />
                 </Button>
                 <Button
                   variant="secondary"
                   size="sm"
+                  onClick={(e) => { e.stopPropagation(); handleExportPNG(char) }}
+                  title="导出PNG"
+                >
+                  <Download className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={(e) => { e.stopPropagation(); handleDelete(char.id) }}
+                  title="删除"
                 >
                   <Trash2 className="h-3 w-3 text-destructive" />
                 </Button>
