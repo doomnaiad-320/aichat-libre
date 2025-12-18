@@ -13,3 +13,4 @@ export type {
 
 export * from './characters'
 export * from './chats'
+export * from './settings'
