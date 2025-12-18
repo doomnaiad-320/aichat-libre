@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Plus, MessageCircle, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/admin/ui/button'
 import { CharacterCard } from '@/components/characters/character-card'
 import { CharacterForm } from '@/components/characters/character-form'
@@ -14,6 +15,7 @@ import {
 } from '@/lib/db/local'
 
 export default function CharactersPage() {
+  const router = useRouter()
   const [characters, setCharacters] = useState<LocalCharacter[]>([])
   const [editing, setEditing] = useState<LocalCharacter | null>(null)
   const [isCreating, setIsCreating] = useState(false)
@@ -38,6 +40,10 @@ export default function CharactersPage() {
       await deleteCharacter(id)
       setCharacters(await getAllCharacters())
     }
+  }
+
+  const handleChat = (id: string) => {
+    router.push(`/chat/${id}`)
   }
 
   if (isCreating || editing) {
@@ -70,13 +76,30 @@ export default function CharactersPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {characters.map(char => (
             <div key={char.id} className="relative group">
-              <CharacterCard character={char} onClick={() => setEditing(char)} />
-              <button
-                onClick={(e) => { e.stopPropagation(); handleDelete(char.id) }}
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-destructive text-sm"
-              >
-                删除
-              </button>
+              <CharacterCard character={char} onClick={() => handleChat(char.id)} />
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 flex gap-1">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={(e) => { e.stopPropagation(); handleChat(char.id) }}
+                >
+                  <MessageCircle className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={(e) => { e.stopPropagation(); setEditing(char) }}
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={(e) => { e.stopPropagation(); handleDelete(char.id) }}
+                >
+                  <Trash2 className="h-3 w-3 text-destructive" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>
