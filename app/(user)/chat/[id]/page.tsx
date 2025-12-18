@@ -12,16 +12,30 @@ import {
   getChatsByCharacter,
   createChat,
   updateChat,
+  getAllPersonas,
+  getDefaultPersona,
+  buildPersonaPrompt,
   type LocalCharacter,
-  type LocalChat
+  type LocalChat,
+  type LocalPersona
 } from '@/lib/db/local'
 import { getAIProviders, getDefaultProvider, type AIProviderConfig } from '@/lib/db/local'
 
-function buildSystemPrompt(char: LocalCharacter): string {
+function buildSystemPrompt(char: LocalCharacter, persona?: LocalPersona): string {
   const parts: string[] = []
+
+  // 人设信息
+  if (persona) {
+    const personaPrompt = buildPersonaPrompt(persona)
+    if (personaPrompt) parts.push(personaPrompt)
+  }
+
+  // 角色信息
+  parts.push('[角色设定]')
   if (char.description) parts.push(`角色描述: ${char.description}`)
   if (char.personality) parts.push(`性格: ${char.personality}`)
   if (char.scenario) parts.push(`场景: ${char.scenario}`)
+
   return parts.join('\n\n')
 }
 
@@ -35,6 +49,8 @@ export default function CharacterChatPage() {
   const [providers, setProviders] = useState<AIProviderConfig[]>([])
   const [selectedProvider, setSelectedProvider] = useState<AIProviderConfig | null>(null)
   const [selectedModel, setSelectedModel] = useState('')
+  const [personas, setPersonas] = useState<LocalPersona[]>([])
+  const [selectedPersona, setSelectedPersona] = useState<LocalPersona | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -69,6 +85,14 @@ export default function CharacterChatPage() {
       } else if (enabledProvs.length > 0) {
         setSelectedProvider(enabledProvs[0])
         setSelectedModel(enabledProvs[0].models[0])
+      }
+
+      // 加载人设
+      const allPersonas = await getAllPersonas()
+      setPersonas(allPersonas)
+      const defaultPersona = await getDefaultPersona()
+      if (defaultPersona) {
+        setSelectedPersona(defaultPersona)
       }
 
       setLoading(false)
@@ -126,7 +150,7 @@ export default function CharacterChatPage() {
     return null
   }
 
-  const systemPrompt = buildSystemPrompt(character)
+  const systemPrompt = buildSystemPrompt(character, selectedPersona || undefined)
 
   return (
     <div className="h-full flex">
@@ -149,6 +173,22 @@ export default function CharacterChatPage() {
             </div>
             <span className="font-medium">{character.name}</span>
           </div>
+          {personas.length > 0 && (
+            <select
+              value={selectedPersona?.id || ''}
+              onChange={e => {
+                const persona = personas.find(p => p.id === e.target.value)
+                setSelectedPersona(persona || null)
+              }}
+              className="text-sm border rounded px-2 py-1 bg-background"
+              title="选择人设"
+            >
+              <option value="">无人设</option>
+              {personas.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          )}
           <select
             value={selectedProvider.id}
             onChange={e => {

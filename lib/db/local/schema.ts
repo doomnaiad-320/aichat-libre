@@ -93,6 +93,19 @@ export interface LocalSemanticMemory {
   updatedAt: Date
 }
 
+// 用户人设
+export interface LocalPersona {
+  id: string
+  name: string
+  avatar?: string
+  description?: string // 人设描述
+  personality?: string // 性格特点
+  background?: string // 背景故事
+  isDefault?: boolean // 是否默认人设
+  createdAt: Date
+  updatedAt: Date
+}
+
 // 用户设置
 export interface LocalSettings {
   id: string
@@ -110,6 +123,7 @@ export class LocalDatabase extends Dexie {
   workingMemory!: EntityTable<LocalWorkingMemory, 'id'>
   episodicMemory!: EntityTable<LocalEpisodicMemory, 'id'>
   semanticMemory!: EntityTable<LocalSemanticMemory, 'id'>
+  personas!: EntityTable<LocalPersona, 'id'>
   settings!: EntityTable<LocalSettings, 'id'>
 
   constructor() {
@@ -123,6 +137,18 @@ export class LocalDatabase extends Dexie {
       workingMemory: 'id, chatId, updatedAt',
       episodicMemory: 'id, chatId, importance, createdAt',
       semanticMemory: 'id, characterId, category, createdAt',
+      settings: 'id, key'
+    })
+
+    this.version(2).stores({
+      characters: 'id, name, createdAt, updatedAt',
+      chats: 'id, characterId, createdAt, updatedAt',
+      messages: 'id, chatId, role, createdAt',
+      lorebooks: 'id, characterId, name, createdAt',
+      workingMemory: 'id, chatId, updatedAt',
+      episodicMemory: 'id, chatId, importance, createdAt',
+      semanticMemory: 'id, characterId, category, createdAt',
+      personas: 'id, name, isDefault, createdAt, updatedAt',
       settings: 'id, key'
     })
   }

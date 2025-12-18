@@ -8,9 +8,11 @@ export type {
   LocalWorkingMemory,
   LocalEpisodicMemory,
   LocalSemanticMemory,
+  LocalPersona,
   LocalSettings
 } from './schema'
 
 export * from './characters'
 export * from './chats'
+export * from './personas'
 export * from './settings'
