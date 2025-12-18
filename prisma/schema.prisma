@@ -50,6 +50,13 @@ model User {
   role          UserRole  @default(USER)
   balance       Int       @default(0) // Token余额
 
+  // Stripe相关
+  stripeCustomerId     String?   @unique @db.VarChar(255)
+  stripeSubscriptionId String?   @db.VarChar(255)
+  stripePriceId        String?   @db.VarChar(255)
+  plan                 PlanType  @default(FREE)
+  planExpiresAt        DateTime?
+
   // 关联
   accounts     Account[]
   sessions     Session[]
@@ -60,6 +67,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   @@index([email])
+  @@index([stripeCustomerId])
 }
 
 // 角色卡 (公开分享的)
@@ -113,20 +121,32 @@ model Transaction {
   user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   type      TransactionType
-  amount    Int             // Token数量
+  amount    Int             // Token数量 (正数为增加，负数为消费)
+  balance   Int             // 交易后余额
   model     String?         @db.VarChar(100) // 使用的模型
   provider  String?         @db.VarChar(100) // AI服务商
+
+  // Stripe相关
+  stripePaymentId String?   @db.VarChar(255)
+  description     String?   @db.VarChar(500)
 
   createdAt DateTime        @default(now())
 
   @@index([userId])
   @@index([createdAt])
+  @@index([stripePaymentId])
 }
 
 // 枚举
 enum UserRole {
   USER
   ADMIN
+}
+
+enum PlanType {
+  FREE
+  PRO
+  PREMIUM
 }
 
 enum Visibility {
@@ -136,8 +156,9 @@ enum Visibility {
 }
 
 enum TransactionType {
-  SPEND
-  REFUND
-  PURCHASE
-  GRANT
+  SPEND      // 消费
+  REFUND     // 退款
+  PURCHASE   // 购买Token
+  SUBSCRIBE  // 订阅赠送
+  GRANT      // 管理员赠送
 }
