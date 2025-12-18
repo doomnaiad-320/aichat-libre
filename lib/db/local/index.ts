@@ -15,4 +15,5 @@ export type {
 export * from './characters'
 export * from './chats'
 export * from './personas'
+export * from './lorebooks'
 export * from './settings'
