@@ -13,7 +13,8 @@
       "Bash(pnpm install:*)",
       "Bash(pnpm db:generate:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\n🤖 feat: 集成Vercel AI SDK\n\n- 添加AI provider工厂函数 \\(OpenAI/Anthropic/兼容接口\\)\n- 创建流式聊天API端点 /api/chat\n- 支持DeepSeek/硅基流动/OpenRouter等OpenAI兼容服务\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(ls:*)"
     ]
   }
 }
