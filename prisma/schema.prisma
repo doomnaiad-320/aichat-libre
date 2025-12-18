@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatar    String?  @db.VarChar(500)
+  password  String?  // 本地认证
+  role      UserRole @default(USER)
+  balance   Int      @default(0) // Token余额
+
+  // 关联
+  characters   Character[]
+  transactions Transaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}
+
+// 角色卡 (公开分享的)
+model Character {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 核心字段 (便于搜索)
+  name        String     @db.VarChar(255)
+  description String?    @db.Text
+  tags        Json?      // ["fantasy", "romance"]
+
+  // 完整角色卡JSON
+  cardData    Json
+
+  // 社区
+  visibility  Visibility @default(PRIVATE)
+  likes       Int        @default(0)
+  downloads   Int        @default(0)
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([visibility, likes])
+  @@index([name])
+}
+
+// AI服务商配置
+model AIProvider {
+  id        String   @id @default(cuid())
+  name      String   @unique @db.VarChar(100)
+  baseUrl   String?  @db.VarChar(500)
+  apiKey    String   @db.Text // 加密存储
+  models    Json     // 支持的模型列表
+  enabled   Boolean  @default(true)
+
+  // 价格配置 (每1K tokens)
+  inputPrice  Decimal? @db.Decimal(10, 6)
+  outputPrice Decimal? @db.Decimal(10, 6)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 交易记录
+model Transaction {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      TransactionType
+  amount    Int             // Token数量
+  model     String?         @db.VarChar(100) // 使用的模型
+  provider  String?         @db.VarChar(100) // AI服务商
+
+  createdAt DateTime        @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// 枚举
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum Visibility {
+  PRIVATE
+  PUBLIC
+  UNLISTED
+}
+
+enum TransactionType {
+  SPEND
+  REFUND
+  PURCHASE
+  GRANT
+}

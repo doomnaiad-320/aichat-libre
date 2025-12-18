@@ -66,10 +66,23 @@
 | 模块 | SDK选型 | 备选 | Stars | 说明 |
 |------|---------|------|-------|------|
 | ORM | **Prisma** | Drizzle ORM | 40k | 类型安全，迁移工具 |
-| 数据库 | **PostgreSQL** | MySQL | - | 功能丰富，JSON支持 |
-| 托管服务 | **Supabase** | PlanetScale, Neon | 75k | 免费额度，实时订阅 |
+| 数据库 | **MySQL 8.0+** | - | - | 自建部署，JSON支持 |
 | 本地存储 | **Dexie.js** | localForage | 11k | IndexedDB封装 |
-| 缓存 | **Upstash Redis** | Redis | - | Serverless Redis |
+| 缓存 | **Redis** | - | - | 自建部署 (规模大时加) |
+
+**服务器存储 (MySQL):**
+- 用户账号/认证
+- AI服务商配置
+- 公开角色卡/Prompt (社区分享)
+- 计费/交易记录
+- 用量统计
+
+**用户本地存储 (IndexedDB):**
+- 对话记录
+- 私有角色卡
+- 人设
+- 记忆/向量
+- Lorebook
 
 ### 2.5 认证层
 
