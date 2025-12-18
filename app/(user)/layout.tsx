@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { MessageCircle, Users, User, Book, CreditCard, Settings } from 'lucide-react'
+import { MessageCircle, Users, User, Book, CreditCard, Settings, Globe } from 'lucide-react'
 
 export default function UserLayout({
   children,
@@ -20,6 +20,9 @@ export default function UserLayout({
         </Link>
         <Link href="/lorebooks" className="p-3 rounded-lg hover:bg-muted" title="世界书">
           <Book className="h-5 w-5" />
+        </Link>
+        <Link href="/community" className="p-3 rounded-lg hover:bg-muted" title="社区">
+          <Globe className="h-5 w-5" />
         </Link>
         <Link href="/billing" className="p-3 rounded-lg hover:bg-muted" title="计费">
           <CreditCard className="h-5 w-5" />

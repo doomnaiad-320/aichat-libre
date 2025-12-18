@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, MessageCircle, Pencil, Trash2, Download } from 'lucide-react'
+import { Plus, MessageCircle, Pencil, Trash2, Download, Share2 } from 'lucide-react'
 import { Button } from '@/components/admin/ui/button'
 import { CharacterCard } from '@/components/characters/character-card'
 import { CharacterForm } from '@/components/characters/character-form'
@@ -100,6 +100,35 @@ export default function CharactersPage() {
     downloadBlob(blob, `${char.name}.png`)
   }
 
+  const handlePublish = async (char: LocalCharacter) => {
+    if (!confirm('确定将此角色卡发布到社区？')) return
+
+    try {
+      const cardData = char.cardData || toCharacterCard(char)
+      const res = await fetch('/api/community/characters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: char.name,
+          description: char.description,
+          tags: char.tags,
+          cardData,
+          visibility: 'PUBLIC'
+        })
+      })
+
+      if (res.ok) {
+        alert('角色卡已发布到社区!')
+      } else {
+        const data = await res.json()
+        alert(`发布失败: ${data.error || '未知错误'}`)
+      }
+    } catch (error) {
+      console.error('Publish error:', error)
+      alert('发布失败，请稍后重试')
+    }
+  }
+
   if (isCreating || editing) {
     return (
       <div className="p-6 max-w-2xl">
@@ -158,6 +187,14 @@ export default function CharactersPage() {
                   title="导出PNG"
                 >
                   <Download className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={(e) => { e.stopPropagation(); handlePublish(char) }}
+                  title="发布到社区"
+                >
+                  <Share2 className="h-3 w-3" />
                 </Button>
                 <Button
                   variant="secondary"

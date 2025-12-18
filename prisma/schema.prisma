@@ -89,12 +89,29 @@ model Character {
   likes       Int        @default(0)
   downloads   Int        @default(0)
 
+  // 关联
+  characterLikes CharacterLike[]
+
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
   @@index([userId])
   @@index([visibility, likes])
   @@index([name])
+}
+
+// 角色卡点赞记录
+model CharacterLike {
+  id          String    @id @default(cuid())
+  userId      String
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, characterId])
+  @@index([characterId])
+  @@index([userId])
 }
 
 // AI服务商配置
