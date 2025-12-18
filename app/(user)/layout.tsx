@@ -5,7 +5,6 @@ export default function UserLayout({
 }) {
   return (
     <div className="min-h-screen">
-      {/* TODO: Add @lobehub/ui ThemeProvider */}
       {children}
     </div>
   )

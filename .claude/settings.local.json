@@ -5,7 +5,13 @@
       "Bash(git add:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\n🎉 init: 项目初始化 - AI角色扮演聊天平台规划文档\n\n- 添加SDK架构规划文档 \\(sdk-architecture-planning.md\\)\n- 添加详细开发计划TODO \\(development-todo.md\\)\n- 添加初始规划文档 \\(virtual-chat-planning.md\\)\n\n技术栈: Next.js 14 + @lobehub/ui + shadcn/ui + Prisma\n架构: 全栈单体架构，本地优先存储\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git push:*)",
-      "Bash(npx create-next-app@latest:*)"
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm dlx:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm db:generate:*)"
     ]
   }
 }
