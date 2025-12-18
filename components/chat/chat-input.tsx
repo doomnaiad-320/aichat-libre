@@ -7,14 +7,15 @@ import { Send } from 'lucide-react'
 type Props = {
   onSend: (content: string) => void
   isLoading?: boolean
+  disabled?: boolean
 }
 
-export function ChatInput({ onSend, isLoading }: Props) {
+export function ChatInput({ onSend, isLoading, disabled }: Props) {
   const [input, setInput] = useState('')
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || isLoading) return
+    if (!input.trim() || isLoading || disabled) return
     onSend(input.trim())
     setInput('')
   }
@@ -24,8 +25,9 @@ export function ChatInput({ onSend, isLoading }: Props) {
       <textarea
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="输入消息..."
-        className="flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        placeholder={disabled ? "请先创建或选择对话" : "输入消息..."}
+        disabled={disabled}
+        className="flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
         rows={1}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey) {
@@ -34,7 +36,7 @@ export function ChatInput({ onSend, isLoading }: Props) {
           }
         }}
       />
-      <Button type="submit" disabled={isLoading || !input.trim()}>
+      <Button type="submit" disabled={isLoading || disabled || !input.trim()}>
         <Send className="h-4 w-4" />
       </Button>
     </form>

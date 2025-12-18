@@ -6,7 +6,15 @@ import Link from 'next/link'
 import { ArrowLeft, Settings } from 'lucide-react'
 import { Button } from '@/components/admin/ui/button'
 import { ChatContainer } from '@/components/chat/chat-container'
-import { getCharacterById, type LocalCharacter } from '@/lib/db/local'
+import { ChatSidebar } from '@/components/chat/chat-sidebar'
+import {
+  getCharacterById,
+  getChatsByCharacter,
+  createChat,
+  updateChat,
+  type LocalCharacter,
+  type LocalChat
+} from '@/lib/db/local'
 import { getAIProviders, getDefaultProvider, type AIProviderConfig } from '@/lib/db/local'
 
 function buildSystemPrompt(char: LocalCharacter): string {
@@ -23,6 +31,7 @@ export default function CharacterChatPage() {
   const characterId = params.id as string
 
   const [character, setCharacter] = useState<LocalCharacter | null>(null)
+  const [currentChat, setCurrentChat] = useState<LocalChat | null>(null)
   const [providers, setProviders] = useState<AIProviderConfig[]>([])
   const [selectedProvider, setSelectedProvider] = useState<AIProviderConfig | null>(null)
   const [selectedModel, setSelectedModel] = useState('')
@@ -36,6 +45,15 @@ export default function CharacterChatPage() {
         return
       }
       setCharacter(char)
+
+      // 加载或创建聊天
+      const chats = await getChatsByCharacter(characterId)
+      if (chats.length > 0) {
+        setCurrentChat(chats[0])
+      } else {
+        const newChat = await createChat(characterId, `与${char.name}的对话`)
+        setCurrentChat(newChat)
+      }
 
       const provs = await getAIProviders()
       const enabledProvs = provs.filter(p => p.enabled && p.apiKey)
@@ -57,6 +75,23 @@ export default function CharacterChatPage() {
     }
     load()
   }, [characterId, router])
+
+  const handleSelectChat = async (chatId: string) => {
+    const chats = await getChatsByCharacter(characterId)
+    const chat = chats.find(c => c.id === chatId)
+    if (chat) setCurrentChat(chat)
+  }
+
+  const handleNewChat = (chat: LocalChat) => {
+    setCurrentChat(chat)
+  }
+
+  const handleFirstMessage = async () => {
+    // 首次发送消息时更新标题
+    if (currentChat && character) {
+      await updateChat(currentChat.id, { title: `与${character.name}的对话` })
+    }
+  }
 
   if (loading) {
     return (
@@ -94,52 +129,62 @@ export default function CharacterChatPage() {
   const systemPrompt = buildSystemPrompt(character)
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="border-b p-2 flex items-center gap-3">
-        <Link href="/characters">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="flex items-center gap-2 flex-1">
-          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
-            {character.name.charAt(0)}
+    <div className="h-full flex">
+      <ChatSidebar
+        characterId={characterId}
+        currentChatId={currentChat?.id}
+        onSelectChat={handleSelectChat}
+        onNewChat={handleNewChat}
+      />
+      <div className="flex-1 flex flex-col">
+        <div className="border-b p-2 flex items-center gap-3">
+          <Link href="/characters">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div className="flex items-center gap-2 flex-1">
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
+              {character.name.charAt(0)}
+            </div>
+            <span className="font-medium">{character.name}</span>
           </div>
-          <span className="font-medium">{character.name}</span>
+          <select
+            value={selectedProvider.id}
+            onChange={e => {
+              const prov = providers.find(p => p.id === e.target.value)
+              if (prov) {
+                setSelectedProvider(prov)
+                setSelectedModel(prov.models[0])
+              }
+            }}
+            className="text-sm border rounded px-2 py-1 bg-background"
+          >
+            {providers.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <select
+            value={selectedModel}
+            onChange={e => setSelectedModel(e.target.value)}
+            className="text-sm border rounded px-2 py-1 bg-background"
+          >
+            {selectedProvider.models.map(m => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
         </div>
-        <select
-          value={selectedProvider.id}
-          onChange={e => {
-            const prov = providers.find(p => p.id === e.target.value)
-            if (prov) {
-              setSelectedProvider(prov)
-              setSelectedModel(prov.models[0])
-            }
-          }}
-          className="text-sm border rounded px-2 py-1 bg-background"
-        >
-          {providers.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
-        <select
-          value={selectedModel}
-          onChange={e => setSelectedModel(e.target.value)}
-          className="text-sm border rounded px-2 py-1 bg-background"
-        >
-          {selectedProvider.models.map(m => (
-            <option key={m} value={m}>{m}</option>
-          ))}
-        </select>
-      </div>
-      <div className="flex-1">
-        <ChatContainer
-          provider={selectedProvider.type}
-          model={selectedModel}
-          apiKey={selectedProvider.apiKey}
-          baseURL={selectedProvider.baseURL}
-          systemPrompt={systemPrompt}
-        />
+        <div className="flex-1">
+          <ChatContainer
+            chatId={currentChat?.id}
+            provider={selectedProvider.type}
+            model={selectedModel}
+            apiKey={selectedProvider.apiKey}
+            baseURL={selectedProvider.baseURL}
+            systemPrompt={systemPrompt}
+            onFirstMessage={handleFirstMessage}
+          />
+        </div>
       </div>
     </div>
   )
